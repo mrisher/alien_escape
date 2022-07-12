@@ -1,6 +1,7 @@
 /*
 Initial sketch for Alien Invasion game powered by Arduino MEGA.
 mrisher(at)gmail.com
+Requires Bounce2 library for pushbutton debouncing
 */
 
 #include <Bounce2.h>
@@ -28,7 +29,7 @@ const byte NUM_DPAD_BUTTONS = 4;
 #define DPAD_RIGHT 3
 // {32, 33, 34, 35};
 const byte dPadButtonPins[NUM_DPAD_BUTTONS] = {32, 33, 34, 35};
-const Bounce dPadButtons[NUM_DPAD_BUTTONS] = {Bounce(), Bounce(), Bounce(), Bounce()};
+Bounce dPadButtons[NUM_DPAD_BUTTONS] = {Bounce(), Bounce(), Bounce(), Bounce()};
 
 // jumper success LEDs
 const byte jumperRedLed = 30;
@@ -72,7 +73,7 @@ void Tile::Print(byte row) {
 //}
 
 #define NUM_TILES 6
-const Tile Tiles[NUM_TILES];
+Tile Tiles[NUM_TILES];
 
 struct GameState {
   bool jumpersCorrect = false;
