@@ -5,6 +5,7 @@ Requires Bounce2 library for pushbutton debouncing
 */
 
 #include <Bounce2.h>
+#include "tile.h"
 
 #define ARRAY_SIZE(array) ((sizeof(array))/(sizeof(array[0])))
 #define MAX_BYTE 255
@@ -35,35 +36,6 @@ Bounce dPadButtons[NUM_DPAD_BUTTONS] = {Bounce(), Bounce(), Bounce(), Bounce()};
 const byte jumperRedLed = 30;
 const byte jumperGreenLed = 31;
 int pause=300;
-
-#define TILE_BITMAP_DIMENSION 5
-class Tile {
-  public:
-    Tile();
-    void SetBitstring (byte bitstrings[]);
-    void Print (byte row);
-  private:
-    byte _bitmap[TILE_BITMAP_DIMENSION];
-};
-
-Tile::Tile() {}
-
-void Tile::SetBitstring (byte bitstrings[]) {
-  for (int i=0; i<TILE_BITMAP_DIMENSION; i++) {
-    _bitmap[i] = bitstrings[i];
-  }
-}
-
-void Tile::Print(byte row) {
-  byte bitstring = _bitmap[row];
-  digitalWrite(rows[row], HIGH);
-  for (byte i=0; i < TILE_BITMAP_DIMENSION; i++) {
-    //Serial.print(bitstring & (1 << (i-1)) ? '+' : '_');
-    int pinState = (bitstring & (1 << (TILE_BITMAP_DIMENSION - i - 1)) ? LOW : HIGH);   // columns are cathode, so LOW = on
-    digitalWrite(columns[i], pinState);
-  }
-  //Serial.println();   // newline
-}
 
 // TileBoard needs to know where each tile is and keep them
 // sorted (at least at print time)
@@ -135,19 +107,15 @@ void setup() {
   }
   
   // set up tiles
-  Serial.println("Starting tiles setup");
-  byte bitstring[] = {
-    0b11001,
-    0b00001,
-    0b11100,
-    0b11110,
-    0b11110};
-  Tiles[0].SetBitstring(bitstring);
-  
-  ClearMatrix();
-  for (int i=0; i<TILE_BITMAP_DIMENSION; i++) {
-    Tiles[0].Print(i);
-  }
+  static const unsigned char PROGMEM tile1[] = {
+    B11000000,
+    B11000000,
+    B11000000,
+    B11110000,
+    B11110000,
+  };
+
+  // display.drawBitmap(0, 0, bitmap_name, bitmap_name_width, bitmap_name_height, WHITE);
 }
 
 // Holds each jumper control LOW one by one, check the others
