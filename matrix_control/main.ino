@@ -5,7 +5,6 @@ Requires Bounce2 library for pushbutton debouncing
 */
 
 #include <Bounce2.h>
-#include "tile.h"
 
 #define ARRAY_SIZE(array) ((sizeof(array))/(sizeof(array[0])))
 #define MAX_BYTE 255
@@ -36,16 +35,6 @@ Bounce dPadButtons[NUM_DPAD_BUTTONS] = {Bounce(), Bounce(), Bounce(), Bounce()};
 const byte jumperRedLed = 30;
 const byte jumperGreenLed = 31;
 int pause=300;
-
-// TileBoard needs to know where each tile is and keep them
-// sorted (at least at print time)
-//class TileBoard {
-//  public:
-//    TileBoard();
-//}
-
-#define NUM_TILES 6
-Tile Tiles[NUM_TILES];
 
 struct GameState {
   bool jumpersCorrect = false;
@@ -115,6 +104,13 @@ void setup() {
     B11110000,
   };
 
+  static const unsigned char PROGMEM tile2[] = {
+    B00111000,
+    B00111000,
+    B00111000,
+    B00001000,
+    B00001000,
+  };
   // display.drawBitmap(0, 0, bitmap_name, bitmap_name_width, bitmap_name_height, WHITE);
 }
 
@@ -175,10 +171,9 @@ void DrawBarGraph(byte height) {
 
 
 void loop() {
-  /*
   static GameState gameState{};
   gameState.jumpersCorrect = CheckJumperStatus();
-
+/*
   switch (CheckButtons()) {
     case DPAD_UP:
       gameState.height++;
