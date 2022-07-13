@@ -13,7 +13,12 @@
             "forcedInclude": [],
             "cStandard": "gnu17",
             "cppStandard": "c++17",
-            "defines": []
+            "defines": [],
+            "browse": {
+                "path": [
+                    "/home/mrisher/Arduino"
+                ]
+            }
         },
         {
             "name": "Arduino",

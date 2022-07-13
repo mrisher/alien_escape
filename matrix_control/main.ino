@@ -5,6 +5,7 @@ Requires Bounce2 library for pushbutton debouncing
 */
 
 #include <Bounce2.h>
+#include "point.h"
 
 #define ARRAY_SIZE(array) ((sizeof(array))/(sizeof(array[0])))
 #define MAX_BYTE 255
@@ -84,95 +85,69 @@ void setup() {
     pinMode(jumperSwitches[i][1], INPUT_PULLUP);
   }
 
-  // set up Jumper LEDs
-  pinMode(jumperRedLed, OUTPUT);
-  pinMode(jumperGreenLed, OUTPUT);
-  CheckJumperStatus();
-
   // set up DPad Buttons {32, 33, 34, 35};
   for (byte i=0; i<NUM_DPAD_BUTTONS; i++) {
     dPadButtons[i].attach(dPadButtonPins[i], INPUT_PULLUP);
     dPadButtons[i].interval(25);
   }
   
-  // set up tiles
+  // set up tiles (helper https://codepen.io/KjeldSchmidt/pen/KaRPzX)
+  static const unsigned char PROGMEM tile0[] = {
+    B11000000,
+    B11000000,
+    B11000000,
+    B11110000,
+    B11110000,
+  };
+
   static const unsigned char PROGMEM tile1[] = {
-    B11000000,
-    B11000000,
-    B11000000,
-    B11110000,
-    B11110000,
+    B00111000,
+    B00111000,
+    B00111000,
+    B00001000,
+    B00001000,
   };
 
   static const unsigned char PROGMEM tile2[] = {
+    B11000000,
+    B11000000,
+    B11000000,
+    B11110000,
+    B11110000,
+  };
+
+  static const unsigned char PROGMEM tile3[] = {
     B00111000,
     B00111000,
     B00111000,
     B00001000,
     B00001000,
   };
+
   // display.drawBitmap(0, 0, bitmap_name, bitmap_name_width, bitmap_name_height, WHITE);
 }
 
-// Holds each jumper control LOW one by one, check the others
-// Needs to do this sequentially to avoid shorting pins to cheat
-bool CheckJumperStatus() {
-  bool correct = false;
-  for (byte jumperToTest=0; jumperToTest<NUM_JUMPERS; jumperToTest++) {
-    digitalWrite(jumperSwitches[jumperToTest][0], LOW);   // pull LOW to test that jumper
-    for (byte i=0; i<NUM_JUMPERS; i++) {
-      // ensure jumperSwitches[jumperToTest] is LOW and others are HIGH
-      if (i == jumperToTest && digitalRead(jumperSwitches[i][1]) == LOW)
-          correct = true;
-      else if (i != jumperToTest && digitalRead(jumperSwitches[i][1]) == HIGH)
-          correct = true;
-      else {
-        correct = false;
-        break;
-      }
-    }
-    digitalWrite(jumperSwitches[jumperToTest][0], HIGH);   // set back to HIGH
-    if (correct == false)
-      break;
-  }
-  
-  // delay(random(30));    // avoid timing attacks from break statements
-  if (correct) {
-    digitalWrite(jumperRedLed, LOW);
-    digitalWrite(jumperGreenLed, HIGH);
-    return true;
-  } else {
-    digitalWrite(jumperRedLed, HIGH);
-    digitalWrite(jumperGreenLed, LOW);
-    return false;
-  }
-}
-
-byte CheckButtons() {
-  for (byte i=0; i<NUM_DPAD_BUTTONS; i++) {
-    dPadButtons[i].update();
-  }
-
-  for (byte i=0; i < NUM_DPAD_BUTTONS; i++) {
-    if (dPadButtons[i].fell())
-      return i;
-  }
-  return MAX_BYTE;     // nothing
-}
-
-void DrawBarGraph(byte height) {
-  for (byte i=0; i < ARRAY_SIZE(rows); i++) {
-    if (i <= height)
-      digitalWrite(rows[i], HIGH);
-    else
-      digitalWrite(rows[i], LOW);
-  }
-}
-
+const byte plugPins[] = {22, 24, 26, 28};
+const byte portPins[] = {23, 25, 27, 29};
+//unsigned char* tangramBitmaps[];
+Point* portLocations[] = {new Point(0,0), new Point(0,3), new Point(3,0), new Point(3,3)};
 
 void loop() {
   static GameState gameState{};
-  gameState.jumpersCorrect = CheckJumperStatus();
+
+  // For each plug (which defines a tangram) I check each of the ports
+  // to see which one is HIGH; that port will define the location as X,Y
+  for (byte plug=0; plug < ARRAY_SIZE(plugPins); plug++) {
+    digitalWrite(plugPins[plug], HIGH);
+    for (byte port=0; port < ARRAY_SIZE(portPins); port++) {
+      if (digitalRead(portPins[port]) == HIGH) {
+        // TODO: render bitmap[plug] at location[port]
+      }
+    }
+    digitalWrite(plugPins[plug], LOW);
+  }
+
+//  gameState.jumpersCorrect = CheckJumperStatus();
 /*
   switch (CheckButtons()) {
     case DPAD_UP:
