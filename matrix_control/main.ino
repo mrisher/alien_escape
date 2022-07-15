@@ -5,148 +5,154 @@ Requires Bounce2 library for pushbutton debouncing
 */
 
 #include <Bounce2.h>
-#include "point.h"
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include "Adafruit_LEDBackpack.h"
+
+Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 
 #define ARRAY_SIZE(array) ((sizeof(array))/(sizeof(array[0])))
-#define MAX_BYTE 255
+#define NULL_LOCATION 255
 
 // Rows & Columns Pins 
-const int rows[] = {2, 3, 4, 5, 6, 7, 8, 9};
-const int columns[] = {10,11,12,13,14};
 const byte NUM_JUMPERS = 4;
-const byte jumperSwitches[NUM_JUMPERS][2] = {
-  {22,23},
-  {24,25},
-  {26,27},
-  {28,29}
+const byte outputJumperPins[NUM_JUMPERS] = {30,32,34,36};
+const byte inputJumperPins[NUM_JUMPERS] = {31,33,35,37};
+
+// 4 tiles, each one is 4 bytes
+#define NUM_TILES 4
+#define TILE_HEIGHT 8
+// https://xantorohara.github.io/led-matrix-editor/#000000000f030303
+static const PROGMEM uint8_t tiles[NUM_TILES][TILE_HEIGHT] {
+  {
+    B10000000,
+    B10000000,
+    B11100000,
+    B01100000,
+    B11100000,
+    B10000000,
+    B10000000,
+    B10000000
+  },
+  {
+    B11000000,
+    B11000000,
+    B11000000,
+    B11100000,
+    B11000000,
+    B11000000,
+    B11000000,
+    B11000000
+  },
+  {
+    B11110000,
+    B11110000,
+    B00100000,
+    B00100000,
+    B00100000,
+    B11100000,
+    B11100000,
+    B11100000
+  },
+  {
+    B01000000,
+    B01000000,
+    B11000000,
+    B11000000,
+    B11000000,
+    B11000000,
+    B11000000,
+    B11000000
+  }
 };
 
+// set correct Tile Locations (x = high 4 bits, y = low 4 bits)
+byte portLocations[NUM_TILES] = {
+  (2 << 4) + 0, (0 << 4) + 0, (3 << 4) + 0, (6 << 4) + 0
+};
 
-// DPad Buttons
-const byte NUM_DPAD_BUTTONS = 4;
-#define DPAD_UP 0
-#define DPAD_DOWN 1
-#define DPAD_LEFT 2
-#define DPAD_RIGHT 3
-// {32, 33, 34, 35};
-const byte dPadButtonPins[NUM_DPAD_BUTTONS] = {32, 33, 34, 35};
-Bounce dPadButtons[NUM_DPAD_BUTTONS] = {Bounce(), Bounce(), Bounce(), Bounce()};
-
-// jumper success LEDs
-const byte jumperRedLed = 30;
-const byte jumperGreenLed = 31;
-int pause=300;
+byte tilePositions[NUM_TILES];
 
 struct GameState {
   bool jumpersCorrect = false;
   byte height = 0;
 };
 
-void ClearMatrix(bool off=true) {
-  // set all pins to off (or on)
-  for (int i=0; i<ARRAY_SIZE(rows); i++) {
-    digitalWrite(rows[i], (off ? LOW : HIGH));      // off = LOW
-  }
-  for (int j=0; j<ARRAY_SIZE(columns); j++) {
-    digitalWrite(columns[j], (off ? HIGH : LOW));   // off = HIGH
-  }
-}
 
 void setup() {
-  Serial.begin(9600); // Any baud rate should work
+  Serial.begin(115200); // Any baud rate should work
   Serial.println("Starting setup()");
-  
-  // set up display matrix
-  for (int i=0; i<ARRAY_SIZE(rows); i++) {
-    pinMode(rows[i], OUTPUT);
+
+// set up the Matrix
+  matrix.begin(0x70);  // pass in the address
+  matrix.clear();
+
+  // zip through matrix as one-time boot animation
+  for (int i=0; i<8; i++) {
+    matrix.drawLine(0,i,7,i,LED_ON);
+    matrix.writeDisplay();  // write the changes we just made to the display
+    delay(25);
   }
-  for (int j=0; j<ARRAY_SIZE(columns); j++) {
-    pinMode(columns[j], OUTPUT);
-  }
-  
-  ClearMatrix(false);
-  delay (1000);
-  
-  // zip through one time
-  for (int i=0; i<ARRAY_SIZE(rows); i++) {
-    digitalWrite(rows[i], HIGH);
-    for (int j=0; j<ARRAY_SIZE(columns); j++) {
-      digitalWrite(columns[j], LOW);
-      delay(25);
-      digitalWrite(columns[j], HIGH);
-    }
-    digitalWrite(rows[i], LOW);
+  for (int i=0; i<8; i++) {
+    matrix.drawLine(0,i,7,i,LED_OFF);
+    matrix.writeDisplay();  // write the changes we just made to the display
+    delay(25);
   }
   
-  // set up switches
+  // set up plugs and holes
   for (byte i=0; i<NUM_JUMPERS; i++) {
-    pinMode(jumperSwitches[i][0], OUTPUT);
-    digitalWrite(jumperSwitches[i][0], HIGH);  // hold HIGH until probing to avoid cross-wiring
-    pinMode(jumperSwitches[i][1], INPUT_PULLUP);
+    pinMode(outputJumperPins[i], OUTPUT);
+    digitalWrite(outputJumperPins[i], HIGH);  // hold HIGH until probing to avoid cross-wiring
+    pinMode(inputJumperPins[i], INPUT_PULLUP);
   }
-
-  // set up DPad Buttons {32, 33, 34, 35};
-  for (byte i=0; i<NUM_DPAD_BUTTONS; i++) {
-    dPadButtons[i].attach(dPadButtonPins[i], INPUT_PULLUP);
-    dPadButtons[i].interval(25);
-  }
-  
-  // set up tiles (helper https://codepen.io/KjeldSchmidt/pen/KaRPzX)
-  static const unsigned char PROGMEM tile0[] = {
-    B11000000,
-    B11000000,
-    B11000000,
-    B11110000,
-    B11110000,
-  };
-
-  static const unsigned char PROGMEM tile1[] = {
-    B00111000,
-    B00111000,
-    B00111000,
-    B00001000,
-    B00001000,
-  };
-
-  static const unsigned char PROGMEM tile2[] = {
-    B11000000,
-    B11000000,
-    B11000000,
-    B11110000,
-    B11110000,
-  };
-
-  static const unsigned char PROGMEM tile3[] = {
-    B00111000,
-    B00111000,
-    B00111000,
-    B00001000,
-    B00001000,
-  };
-
-  // display.drawBitmap(0, 0, bitmap_name, bitmap_name_width, bitmap_name_height, WHITE);
 }
-
-const byte plugPins[] = {22, 24, 26, 28};
-const byte portPins[] = {23, 25, 27, 29};
-//unsigned char* tangramBitmaps[];
-Point* portLocations[] = {new Point(0,0), new Point(0,3), new Point(3,0), new Point(3,3)};
 
 void loop() {
   static GameState gameState{};
 
   // For each plug (which defines a tangram) I check each of the ports
   // to see which one is HIGH; that port will define the location as X,Y
-  for (byte plug=0; plug < ARRAY_SIZE(plugPins); plug++) {
-    digitalWrite(plugPins[plug], HIGH);
-    for (byte port=0; port < ARRAY_SIZE(portPins); port++) {
-      if (digitalRead(portPins[port]) == HIGH) {
-        // TODO: render bitmap[plug] at location[port]
+  for (byte plug=0; plug < ARRAY_SIZE(outputJumperPins); plug++) {
+    digitalWrite(outputJumperPins[plug], LOW);
+    byte tile = plug;
+    for (byte port=0; port < ARRAY_SIZE(inputJumperPins); port++) {
+      if (digitalRead(inputJumperPins[port]) == LOW) {
+        byte position = portLocations[port] >> 4;
+        tilePositions[tile] = position;
+        /*
+        Serial.print("Placing tile ");
+        Serial.print(tile);
+        Serial.print(" at position ");
+        Serial.println(position);
+        */
+        break;   // skip to next plug   
       }
+      else
+        tilePositions[tile] = NULL_LOCATION;
     }
-    digitalWrite(plugPins[plug], LOW);
+    digitalWrite(outputJumperPins[plug], HIGH);
   }
 
+  // draw the tiles in their respective positions
+  matrix.clear();
+  for (byte tile=0; tile<NUM_TILES; tile++) {
+    if (tilePositions[tile] != NULL_LOCATION) {
+      matrix.drawBitmap(tilePositions[tile], 0, tiles[tile], 8, 8, LED_ON);
+    }
+  }
+  matrix.writeDisplay();  
+
+  // check for win?
+  bool win = true;
+  for (byte tile=0; tile<NUM_TILES; tile++) {
+    if (tilePositions[tile] != portLocations[tile] >> 4) {
+      win = false;
+      break;
+    }
+  }
+  if (win) {
+    Serial.println("WINNER!");
+  }
 //  gameState.jumpersCorrect = CheckJumperStatus();
 /*
   switch (CheckButtons()) {

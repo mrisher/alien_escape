@@ -1,7 +1,7 @@
 {
     "configuration": "cpu=atmega2560",
     "board": "arduino:avr:mega",
-    "port": "/dev/ttyS0",
+    "port": "/dev/ttyACM0",
     "output": "../build",
     "programmer": "arduino:avrispmkii",
     "sketch": "matrix_control/main.ino"

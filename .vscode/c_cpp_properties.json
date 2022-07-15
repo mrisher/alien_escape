@@ -13,12 +13,7 @@
             "forcedInclude": [],
             "cStandard": "gnu17",
             "cppStandard": "c++17",
-            "defines": [],
-            "browse": {
-                "path": [
-                    "/home/mrisher/Arduino"
-                ]
-            }
+            "defines": []
         },
         {
             "name": "Arduino",
@@ -37,6 +32,11 @@
                 "/home/mrisher/Arduino/hardware/arduino/avr/cores/arduino",
                 "/home/mrisher/Arduino/hardware/arduino/avr/variants/mega",
                 "/home/mrisher/Arduino/libraries/Bounce2/src",
+                "/home/mrisher/Arduino/hardware/arduino/avr/libraries/Wire/src",
+                "/home/mrisher/src/libraries/Adafruit_GFX_Library",
+                "/home/mrisher/src/libraries/Adafruit_BusIO",
+                "/home/mrisher/Arduino/hardware/arduino/avr/libraries/SPI/src",
+                "/home/mrisher/src/libraries/Adafruit_LED_Backpack_Library",
                 "/home/mrisher/Arduino/hardware/tools/avr/lib/gcc/avr/7.3.0/include",
                 "/home/mrisher/Arduino/hardware/tools/avr/lib/gcc/avr/7.3.0/include-fixed",
                 "/home/mrisher/Arduino/hardware/tools/avr/avr/include"
