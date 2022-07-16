@@ -9,6 +9,7 @@ Requires Bounce2 library for pushbutton debouncing
 #include <Adafruit_GFX.h>
 #include <Adafruit_LEDBackpack.h>
 #include <Fsm.h>
+#include "tangrams.h"
 
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 
@@ -19,60 +20,6 @@ Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 const byte NUM_JUMPERS = 4;
 const byte outputJumperPins[NUM_JUMPERS] = {30,32,34,36};
 const byte inputJumperPins[NUM_JUMPERS] = {31,33,35,37};
-
-// 4 tangrams, each one is 4 bytes
-#define NUM_TANGRAMS 4
-#define TANGRAM_HEIGHT 8
-// https://xantorohara.github.io/led-matrix-editor/#000000000f030303
-static const PROGMEM uint8_t tangrams[NUM_TANGRAMS][TANGRAM_HEIGHT] {
-  {
-    B10000000,
-    B10000000,
-    B11100000,
-    B01100000,
-    B11100000,
-    B10000000,
-    B10000000,
-    B10000000
-  },
-  {
-    B11000000,
-    B11000000,
-    B11000000,
-    B11100000,
-    B11000000,
-    B11000000,
-    B11000000,
-    B11000000
-  },
-  {
-    B11110000,
-    B11110000,
-    B00100000,
-    B00100000,
-    B00100000,
-    B11100000,
-    B11100000,
-    B11100000
-  },
-  {
-    B01000000,
-    B01000000,
-    B11000000,
-    B11000000,
-    B11000000,
-    B11000000,
-    B11000000,
-    B11000000
-  }
-};
-
-// set correct Tile Locations (x = high 4 bits, y = low 4 bits)
-byte portLocations[NUM_TANGRAMS] = {
-  (2 << 4) + 0, (0 << 4) + 0, (3 << 4) + 0, (6 << 4) + 0
-};
-
-byte tilePositions[NUM_TANGRAMS];
 
 struct GameState {
   bool jumpersCorrect = false;
@@ -119,7 +66,7 @@ void loop() {
     for (byte port=0; port < ARRAY_SIZE(inputJumperPins); port++) {
       if (digitalRead(inputJumperPins[port]) == LOW) {
         byte position = portLocations[port] >> 4;
-        tilePositions[tile] = position;
+        tangramPositions[tile] = position;
         /*
         Serial.print("Placing tile ");
         Serial.print(tile);
@@ -129,7 +76,7 @@ void loop() {
         break;   // skip to next plug   
       }
       else
-        tilePositions[tile] = NULL_LOCATION;
+        tangramPositions[tile] = NULL_LOCATION;
     }
     digitalWrite(outputJumperPins[plug], HIGH);
   }
@@ -137,8 +84,8 @@ void loop() {
   // draw the tangrams in their respective positions
   matrix.clear();
   for (byte tile=0; tile<NUM_TANGRAMS; tile++) {
-    if (tilePositions[tile] != NULL_LOCATION) {
-      matrix.drawBitmap(tilePositions[tile], 0, tangrams[tile], 8, 8, LED_ON);
+    if (tangramPositions[tile] != NULL_LOCATION) {
+      matrix.drawBitmap(tangramPositions[tile], 0, tangrams[tile], 8, 8, LED_ON);
     }
   }
   matrix.writeDisplay();  
@@ -146,7 +93,7 @@ void loop() {
   // check for win?
   bool win = true;
   for (byte tile=0; tile<NUM_TANGRAMS; tile++) {
-    if (tilePositions[tile] != portLocations[tile] >> 4) {
+    if (tangramPositions[tile] != portLocations[tile] >> 4) {
       win = false;
       break;
     }
