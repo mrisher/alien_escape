@@ -7,7 +7,8 @@ Requires Bounce2 library for pushbutton debouncing
 #include <Bounce2.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
-#include "Adafruit_LEDBackpack.h"
+#include <Adafruit_LEDBackpack.h>
+#include <Fsm.h>
 
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 
@@ -19,11 +20,11 @@ const byte NUM_JUMPERS = 4;
 const byte outputJumperPins[NUM_JUMPERS] = {30,32,34,36};
 const byte inputJumperPins[NUM_JUMPERS] = {31,33,35,37};
 
-// 4 tiles, each one is 4 bytes
-#define NUM_TILES 4
-#define TILE_HEIGHT 8
+// 4 tangrams, each one is 4 bytes
+#define NUM_TANGRAMS 4
+#define TANGRAM_HEIGHT 8
 // https://xantorohara.github.io/led-matrix-editor/#000000000f030303
-static const PROGMEM uint8_t tiles[NUM_TILES][TILE_HEIGHT] {
+static const PROGMEM uint8_t tangrams[NUM_TANGRAMS][TANGRAM_HEIGHT] {
   {
     B10000000,
     B10000000,
@@ -67,11 +68,11 @@ static const PROGMEM uint8_t tiles[NUM_TILES][TILE_HEIGHT] {
 };
 
 // set correct Tile Locations (x = high 4 bits, y = low 4 bits)
-byte portLocations[NUM_TILES] = {
+byte portLocations[NUM_TANGRAMS] = {
   (2 << 4) + 0, (0 << 4) + 0, (3 << 4) + 0, (6 << 4) + 0
 };
 
-byte tilePositions[NUM_TILES];
+byte tilePositions[NUM_TANGRAMS];
 
 struct GameState {
   bool jumpersCorrect = false;
@@ -133,18 +134,18 @@ void loop() {
     digitalWrite(outputJumperPins[plug], HIGH);
   }
 
-  // draw the tiles in their respective positions
+  // draw the tangrams in their respective positions
   matrix.clear();
-  for (byte tile=0; tile<NUM_TILES; tile++) {
+  for (byte tile=0; tile<NUM_TANGRAMS; tile++) {
     if (tilePositions[tile] != NULL_LOCATION) {
-      matrix.drawBitmap(tilePositions[tile], 0, tiles[tile], 8, 8, LED_ON);
+      matrix.drawBitmap(tilePositions[tile], 0, tangrams[tile], 8, 8, LED_ON);
     }
   }
   matrix.writeDisplay();  
 
   // check for win?
   bool win = true;
-  for (byte tile=0; tile<NUM_TILES; tile++) {
+  for (byte tile=0; tile<NUM_TANGRAMS; tile++) {
     if (tilePositions[tile] != portLocations[tile] >> 4) {
       win = false;
       break;
@@ -153,18 +154,4 @@ void loop() {
   if (win) {
     Serial.println("WINNER!");
   }
-//  gameState.jumpersCorrect = CheckJumperStatus();
-/*
-  switch (CheckButtons()) {
-    case DPAD_UP:
-      gameState.height++;
-      break;
-    case DPAD_DOWN:
-      gameState.height--;
-      break;
-    case MAX_BYTE:
-    default:
-      break;
-  }
-  */
 }
