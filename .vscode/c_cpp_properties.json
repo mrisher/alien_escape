@@ -37,7 +37,7 @@
                 "/home/mrisher/src/libraries/Adafruit_BusIO",
                 "/home/mrisher/Arduino/hardware/arduino/avr/libraries/SPI/src",
                 "/home/mrisher/src/libraries/Adafruit_LED_Backpack_Library",
-                "/home/mrisher/src/libraries/arduino-fsm",
+                "/home/mrisher/src/libraries/YA_FSM/src",
                 "/home/mrisher/Arduino/hardware/tools/avr/lib/gcc/avr/7.3.0/include",
                 "/home/mrisher/Arduino/hardware/tools/avr/lib/gcc/avr/7.3.0/include-fixed",
                 "/home/mrisher/Arduino/hardware/tools/avr/avr/include"

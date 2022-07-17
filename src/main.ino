@@ -8,10 +8,31 @@ Requires Bounce2 library for pushbutton debouncing
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_LEDBackpack.h>
-#include <Fsm.h>
+#include <YA_FSM.h>
 #include "tangrams.h"
 
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
+
+// set up pulsing led for 8x8 ready state
+YA_FSM matrixPulsarFSM;
+#define BLINK_TIME 500
+// State Alias 
+enum matrixPulsarState {PULSAR_ON, PULSAR_OFF};
+// Helper for print labels instead integer when state change
+const char * const matrixPulsarStateName[] PROGMEM = { "Pulsar On", "Pulsar Off"};
+
+// display the appropriate LED value
+void onEnterMatrixOnState() {
+  Serial.println("onEnterMatrixOnState()");
+  matrix.drawPixel(7, 7, LED_ON);
+  matrix.writeDisplay();
+}
+void onEnterMatrixOffState() {
+  Serial.println("onEnterMatrixOffState()");
+  matrix.drawPixel(7, 7, LED_OFF);
+  matrix.writeDisplay();
+}
+
 
 #define ARRAY_SIZE(array) ((sizeof(array))/(sizeof(array[0])))
 #define NULL_LOCATION 255
@@ -35,6 +56,17 @@ void setup() {
   matrix.begin(0x70);  // pass in the address
   matrix.clear();
 
+  // set up the FSM for pulsing
+  // Follow the order of defined enumeration for the state definition (will be used as index)
+  //Add States  => name, 		timeout, onEnter callback, onState cb, 	  onLeave cb	
+  matrixPulsarFSM.AddState(matrixPulsarStateName[PULSAR_ON], BLINK_TIME, onEnterMatrixOnState, nullptr, nullptr);
+  matrixPulsarFSM.AddState(matrixPulsarStateName[PULSAR_OFF], BLINK_TIME, onEnterMatrixOffState, nullptr, nullptr);
+  // Add transitions with related trigger input callback functions
+  // In this example it's just a simple lambda function that return state timeout value
+  matrixPulsarFSM.AddTransition(PULSAR_ON, PULSAR_OFF, [](){return matrixPulsarFSM.CurrentState()->timeout;} );    
+  matrixPulsarFSM.AddTransition(PULSAR_OFF, PULSAR_ON, [](){return matrixPulsarFSM.CurrentState()->timeout;} );    
+
+
   // zip through matrix as one-time boot animation
   for (int i=0; i<8; i++) {
     matrix.drawLine(0,i,7,i,LED_ON);
@@ -57,6 +89,12 @@ void setup() {
 
 void loop() {
   static GameState gameState{};
+
+  // Update State Machine
+  if(matrixPulsarFSM.Update()){
+    Serial.print(F("New active state: "));
+    Serial.println(matrixPulsarFSM.ActiveStateName());
+  }
 
   // For each plug (which defines a tangram) I check each of the ports
   // to see which one is HIGH; that port will define the location as X,Y
