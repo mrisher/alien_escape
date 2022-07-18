@@ -8,29 +8,27 @@ Requires Bounce2 library for pushbutton debouncing
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_LEDBackpack.h>
-#include <YA_FSM.h>
+#include <YA_FSM.h>   // https://github.com/cotestatnt/YA_FSM
 #include "tangrams.h"
 
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 
 // set up pulsing led for 8x8 ready state
 YA_FSM matrixPulsarFSM;
-#define BLINK_TIME 500
+#define BLINK_TIME 1000
 // State Alias 
 enum matrixPulsarState {PULSAR_ON, PULSAR_OFF};
 // Helper for print labels instead integer when state change
 const char * const matrixPulsarStateName[] PROGMEM = { "Pulsar On", "Pulsar Off"};
 
 // display the appropriate LED value
-void onEnterMatrixOnState() {
-  Serial.println("onEnterMatrixOnState()");
+void onInMatrixOnState() {
+  Serial.println("onInMatrixOnState()");
   matrix.drawPixel(7, 7, LED_ON);
-  matrix.writeDisplay();
 }
-void onEnterMatrixOffState() {
-  Serial.println("onEnterMatrixOffState()");
+void onInMatrixOffState() {
+  Serial.println("onInMatrixOffState()");
   matrix.drawPixel(7, 7, LED_OFF);
-  matrix.writeDisplay();
 }
 
 
@@ -59,8 +57,8 @@ void setup() {
   // set up the FSM for pulsing
   // Follow the order of defined enumeration for the state definition (will be used as index)
   //Add States  => name, 		timeout, onEnter callback, onState cb, 	  onLeave cb	
-  matrixPulsarFSM.AddState(matrixPulsarStateName[PULSAR_ON], BLINK_TIME, onEnterMatrixOnState, nullptr, nullptr);
-  matrixPulsarFSM.AddState(matrixPulsarStateName[PULSAR_OFF], BLINK_TIME, onEnterMatrixOffState, nullptr, nullptr);
+  matrixPulsarFSM.AddState(matrixPulsarStateName[PULSAR_ON], BLINK_TIME, nullptr, onInMatrixOnState, nullptr);
+  matrixPulsarFSM.AddState(matrixPulsarStateName[PULSAR_OFF], BLINK_TIME, nullptr, onInMatrixOffState, nullptr);
   // Add transitions with related trigger input callback functions
   // In this example it's just a simple lambda function that return state timeout value
   matrixPulsarFSM.AddTransition(PULSAR_ON, PULSAR_OFF, [](){return matrixPulsarFSM.CurrentState()->timeout;} );    
@@ -90,21 +88,20 @@ void setup() {
 void loop() {
   static GameState gameState{};
 
-  // Update State Machine
-  if(matrixPulsarFSM.Update()){
-    Serial.print(F("New active state: "));
-    Serial.println(matrixPulsarFSM.ActiveStateName());
-  }
-
   // For each plug (which defines a tangram) I check each of the ports
   // to see which one is HIGH; that port will define the location as X,Y
+  bool needsRefresh = false;
   for (byte plug=0; plug < ARRAY_SIZE(outputJumperPins); plug++) {
     digitalWrite(outputJumperPins[plug], LOW);
     byte tile = plug;
     for (byte port=0; port < ARRAY_SIZE(inputJumperPins); port++) {
       if (digitalRead(inputJumperPins[port]) == LOW) {
         byte position = portLocations[port] >> 4;
-        tangramPositions[tile] = position;
+        if (tangramPositions[tile] != position) {
+          // this is probably unnecessary (the removal below will always fire first)
+          needsRefresh = true;
+          tangramPositions[tile] = position;
+        }
         /*
         Serial.print("Placing tile ");
         Serial.print(tile);
@@ -113,20 +110,36 @@ void loop() {
         */
         break;   // skip to next plug   
       }
-      else
-        tangramPositions[tile] = NULL_LOCATION;
+      else {
+        if (tangramPositions[tile] != NULL_LOCATION) {
+          needsRefresh = true;
+          tangramPositions[tile] = NULL_LOCATION;
+        }
+      }
     }
     digitalWrite(outputJumperPins[plug], HIGH);
   }
 
+
+  // clear board in case something removed 
+  if (needsRefresh)
+    matrix.clear();   // in case something has been removed
+
   // draw the tangrams in their respective positions
-  matrix.clear();
   for (byte tile=0; tile<NUM_TANGRAMS; tile++) {
-    if (tangramPositions[tile] != NULL_LOCATION) {
+    if (tangramPositions[tile] != NULL_LOCATION && tangramPositions[tile]) {
       matrix.drawBitmap(tangramPositions[tile], 0, tangrams[tile], 8, 8, LED_ON);
     }
   }
-  matrix.writeDisplay();  
+
+  // Update pulsar State Machine
+  if(matrixPulsarFSM.Update()){
+    Serial.print("New active state: ");
+    Serial.println(matrixPulsarFSM.ActiveStateName());
+  }
+
+  matrix.writeDisplay();
+    
 
   // check for win?
   bool win = true;
