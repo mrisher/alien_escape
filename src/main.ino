@@ -10,21 +10,12 @@ Requires Bounce2 library for pushbutton debouncing
 #include <Adafruit_LEDBackpack.h>
 #include <YA_FSM.h> // https://github.com/cotestatnt/YA_FSM
 #include "tangrams.h"
+#include "matrixPulsarFsm.h"
 
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 
 // set up pulsing led for 8x8 ready state
-YA_FSM matrixPulsarFSM;
-bool matrixPulsarLedState = false;
-#define BLINK_TIME 1000
-// State Alias
-enum matrixPulsarState
-{
-  PULSAR_ON,
-  PULSAR_OFF
-};
-// Helper for print labels instead integer when state change
-const char *const matrixPulsarStateName[] PROGMEM = {"Pulsar On", "Pulsar Off"};
+MatrixPulsarFSM matrixPulsarFSM;
 
 // display the appropriate LED value
 // void onInMatrixOnState()
@@ -61,19 +52,7 @@ void setup()
   matrix.begin(0x70); // pass in the address
   matrix.clear();
 
-  // set up the FSM for pulsing
-  // Follow the order of defined enumeration for the state definition (will be used as index)
-  // Add States  => name, 		timeout, onEnter callback, onState cb, 	  onLeave cb
-  matrixPulsarFSM.AddState(matrixPulsarStateName[PULSAR_ON], BLINK_TIME, nullptr, nullptr, nullptr);
-  matrixPulsarFSM.AddState(matrixPulsarStateName[PULSAR_OFF], BLINK_TIME, nullptr, nullptr, nullptr);
-  // Add transitions with related trigger input callback functions
-  // In this example it's just a simple lambda function that return state timeout value
-  matrixPulsarFSM.AddTransition(PULSAR_ON, PULSAR_OFF, []()
-                                { return matrixPulsarFSM.CurrentState()->timeout; });
-  matrixPulsarFSM.AddTransition(PULSAR_OFF, PULSAR_ON, []()
-                                { return matrixPulsarFSM.CurrentState()->timeout; });
-  matrixPulsarFSM.AddAction(PULSAR_ON, YA_FSM::S, matrixPulsarLedState);    // S = set to on
-  matrixPulsarFSM.AddAction(PULSAR_OFF, YA_FSM::R, matrixPulsarLedState);   // R = reset to false
+  matrixPulsarFSM.Setup();
 
   // zip through matrix as one-time boot animation
   for (int i = 0; i < 8; i++)
@@ -162,7 +141,7 @@ void loop()
   }
 
   // draw/erase the pulsar pixel
-  matrix.drawPixel(7,7,matrixPulsarLedState);
+  matrix.drawPixel(7,7,matrixPulsarFSM.GetLedState());
 
   //update the LED matrix
   matrix.writeDisplay();
