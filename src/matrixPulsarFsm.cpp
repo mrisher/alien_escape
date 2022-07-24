@@ -1,5 +1,12 @@
 #include "matrixPulsarFsm.h"
 
+MatrixPulsarFSM::MatrixPulsarFSM(Adafruit_8x8matrix* m, int x, int y) {
+    pulsarX = x;
+    pulsarY = y;
+    matrix = m;
+    this->Setup();
+}
+
 
 void MatrixPulsarFSM::Setup() {
   // set up the FSM for pulsing
@@ -15,6 +22,6 @@ void MatrixPulsarFSM::Setup() {
     
 }
 
-uint16_t MatrixPulsarFSM::GetLedState() {
-    return matrixPulsarLedState;    
+void MatrixPulsarFSM::Paint() {
+  matrix->drawPixel(pulsarX, pulsarY, matrixPulsarLedState);    
 }

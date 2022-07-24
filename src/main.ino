@@ -15,7 +15,7 @@ Requires Bounce2 library for pushbutton debouncing
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 
 // set up pulsing led for 8x8 ready state
-MatrixPulsarFSM matrixPulsarFSM;
+MatrixPulsarFSM matrixPulsarFSM(&matrix);
 
 // display the appropriate LED value
 // void onInMatrixOnState()
@@ -51,8 +51,6 @@ void setup()
   // set up the Matrix
   matrix.begin(0x70); // pass in the address
   matrix.clear();
-
-  matrixPulsarFSM.Setup();
 
   // zip through matrix as one-time boot animation
   for (int i = 0; i < 8; i++)
@@ -136,12 +134,13 @@ void loop()
   // Update pulsar State Machine
   if (matrixPulsarFSM.Update())
   {
-    Serial.print("New active state: ");
-    Serial.println(matrixPulsarFSM.ActiveStateName());
+    // Serial.print("New active state: ");
+    // Serial.println(matrixPulsarFSM.ActiveStateName());
   }
 
   // draw/erase the pulsar pixel
-  matrix.drawPixel(7,7,matrixPulsarFSM.GetLedState());
+  //matrix.drawPixel(7,7,matrixPulsarFSM.GetLedState());
+  matrixPulsarFSM.Paint();
 
   //update the LED matrix
   matrix.writeDisplay();

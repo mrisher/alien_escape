@@ -2,8 +2,10 @@
 #define D976A36F_9AB8_424E_A104_8E50E495F99D
 
 #include <YA_FSM.h>
+#include <Arduino.h>
+#include <Adafruit_LEDBackpack.h>
 
-#define BLINK_TIME 1000
+const int BLINK_TIME=1000;
 
 // State Alias
 enum matrixPulsarState
@@ -16,10 +18,14 @@ const char *const matrixPulsarStateName[] PROGMEM = {"Pulsar On", "Pulsar Off"};
 
 class MatrixPulsarFSM : public YA_FSM {
     public:
-        void Setup();
-        uint16_t GetLedState();
+        MatrixPulsarFSM(Adafruit_8x8matrix* m, int x=7, int y=7);
+        void Paint();
     private:
         bool matrixPulsarLedState = false;
+        int pulsarX;    // coordinates
+        int pulsarY;
+        Adafruit_8x8matrix* matrix;
+        void Setup();
 };
 
 #endif /* D976A36F_9AB8_424E_A104_8E50E495F99D */
