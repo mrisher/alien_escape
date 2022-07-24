@@ -7,8 +7,7 @@ void MatrixPulsarFSM::Setup() {
   // Add States  => name, 		timeout, onEnter callback, onState cb, 	  onLeave cb
   this->AddState(matrixPulsarStateName[PULSAR_ON], BLINK_TIME, nullptr, nullptr, nullptr);
   this->AddState(matrixPulsarStateName[PULSAR_OFF], BLINK_TIME, nullptr, nullptr, nullptr);
-  // Add transitions with related trigger input callback functions
-  // In this example it's just a simple lambda function that return state timeout value
+  // Add transitions with related time-based trigger
   this->AddTimedTransition(PULSAR_ON, PULSAR_OFF);
   this->AddTimedTransition(PULSAR_OFF, PULSAR_ON);
   this->AddAction(PULSAR_ON, YA_FSM::S, matrixPulsarLedState);    // S = set to on
