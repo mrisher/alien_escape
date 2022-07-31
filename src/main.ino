@@ -22,15 +22,6 @@ Requires Bounce2 library for pushbutton debouncing
 #include "matrixPulsarFsm.h"
 #include "alienNumber.h"
 
-#define DEBUG   //If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
-#ifdef DEBUG    //Macros are usually in all capital letters.
-   #define DPRINT(...)    Serial.print(__VA_ARGS__)     //DPRINT is a macro, debug print
-   #define DPRINTLN(...)  Serial.println(__VA_ARGS__)   //DPRINTLN is a macro, debug print with new line
-#else
-   #define DPRINT(...)     //now defines a blank line
-   #define DPRINTLN(...)   //now defines a blank line
-#endif
-
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 Adafruit_AlphaNum4 alphanum = Adafruit_AlphaNum4();
 
@@ -59,14 +50,17 @@ void setup()
   //set up the alphanum quad display
   alphanum.begin(0x71);  // pass in the address
   alphanum.clear();
-  alphanum.writeDigitRaw(3, 0x0);
-  alphanum.writeDigitRaw(0, 0xFFFF);
+  alphanum.writeDigitAscii(0, 'A');
+  alphanum.writeDigitAscii(1, 'B');
+  alphanum.writeDigitAscii(2, 'C');
+  alphanum.writeDigitAscii(3, 'D');
   alphanum.writeDisplay();
   DPRINTLN("Finished setting up quad alphanum");
   
 
 
   // zip through matrix as one-time boot animation
+  DPRINTLN("Starting 8x8 animation");
   for (int i = 0; i < 8; i++)
   {
     matrix.drawLine(0, i, 7, i, LED_ON);
@@ -79,6 +73,7 @@ void setup()
     matrix.writeDisplay(); // write the changes we just made to the display
     delay(25);
   }
+  DPRINTLN("Finished 8x8 animation");
 
   // set up plugs and holes
   DPRINTLN("Setting up tangram plugs and ports");
