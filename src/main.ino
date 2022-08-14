@@ -12,30 +12,27 @@ Requires Bounce2 library for pushbutton debouncing
 #include "tangrams.h"
 #include "matrixPulsarFsm.h"
 
+#define DEBUG   //If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
+#ifdef DEBUG    //Macros are usually in all capital letters.
+   #define DPRINT(...)    Serial.print(__VA_ARGS__)     //DPRINT is a macro, debug print
+   #define DPRINTLN(...)  Serial.println(__VA_ARGS__)   //DPRINTLN is a macro, debug print with new line
+#else
+   #define DPRINT(...)     //now defines a blank line
+   #define DPRINTLN(...)   //now defines a blank line
+#endif
+
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 
 // set up pulsing led for 8x8 ready state
 MatrixPulsarFSM matrixPulsarFSM(&matrix);
 
-// display the appropriate LED value
-// void onInMatrixOnState()
-// {
-//   Serial.println("onInMatrixOnState()");
-//   matrix.drawPixel(7, 7, LED_ON);
-// }
-// void onInMatrixOffState()
-// {
-//   Serial.println("onInMatrixOffState()");
-//   matrix.drawPixel(7, 7, LED_OFF);
-// }
-
 #define ARRAY_SIZE(array) ((sizeof(array)) / (sizeof(array[0])))
 #define NULL_LOCATION 255
 
-// Rows & Columns Pins
+// Plugs (tangrams) & Columns (ports) Pins
 const byte NUM_JUMPERS = 4;
-const byte outputJumperPins[NUM_JUMPERS] = {30, 32, 34, 36};
-const byte inputJumperPins[NUM_JUMPERS] = {31, 33, 35, 37};
+const byte inputJumperPins[NUM_JUMPERS] = {30, 38, 34, 36};
+const byte outputJumperPins[NUM_JUMPERS] = {31, 33, 35, 37};
 
 struct GameState
 {
@@ -46,11 +43,12 @@ struct GameState
 void setup()
 {
   Serial.begin(115200); // Any baud rate should work
-  Serial.println("Starting setup()");
+  DPRINTLN("Starting setup()");
 
   // set up the Matrix
   matrix.begin(0x70); // pass in the address
   matrix.clear();
+  DPRINTLN("Cleared matrix");
 
   // zip through matrix as one-time boot animation
   for (int i = 0; i < 8; i++)
@@ -67,12 +65,15 @@ void setup()
   }
 
   // set up plugs and holes
+  DPRINTLN("Setting up pins and plugs");
   for (byte i = 0; i < NUM_JUMPERS; i++)
   {
     pinMode(outputJumperPins[i], OUTPUT);
     digitalWrite(outputJumperPins[i], HIGH); // hold HIGH until probing to avoid cross-wiring
     pinMode(inputJumperPins[i], INPUT_PULLUP);
   }
+
+  DPRINTLN("setup() done");
 }
 
 
@@ -81,7 +82,7 @@ void loop()
   static GameState gameState{};
 
   // For each plug (which defines a tangram) I check each of the ports
-  // to see which one is HIGH; that port will define the location as X,Y
+  // to see which one is LOW; that port will define the location as X,Y
   bool needsRefresh = false;
   for (byte plug = 0; plug < ARRAY_SIZE(outputJumperPins); plug++)
   {
@@ -91,19 +92,14 @@ void loop()
     {
       if (digitalRead(inputJumperPins[port]) == LOW)
       {
-        byte position = portLocations[port] >> 4;
-        if (tangramPositions[tile] != position)
+        byte xPosition = portToXYCoordinates[port] >> 4;
+        if (tangramPositions[tile] != xPosition)
         {
-          // this is probably unnecessary (the removal below will always fire first)
+          // needsRefresh is probably unnecessary (the removal below will always fire first)
           needsRefresh = true;
-          tangramPositions[tile] = position;
+          tangramPositions[tile] = xPosition;
+          DPRINT("Tile "); DPRINT(tile); DPRINT(" is now in pos "); DPRINTLN(xPosition);
         }
-        /*
-        Serial.print("Placing tile ");
-        Serial.print(tile);
-        Serial.print(" at position ");
-        Serial.println(position);
-        */
         break; // skip to next plug
       }
       else
@@ -125,7 +121,7 @@ void loop()
   // draw the tangrams in their respective positions
   for (byte tile = 0; tile < NUM_TANGRAMS; tile++)
   {
-    if (tangramPositions[tile] != NULL_LOCATION && tangramPositions[tile])
+    if (tangramPositions[tile] != NULL_LOCATION)
     {
       matrix.drawBitmap(tangramPositions[tile], 0, tangrams[tile], 8, 8, LED_ON);
     }
@@ -134,8 +130,8 @@ void loop()
   // Update pulsar State Machine
   if (matrixPulsarFSM.Update())
   {
-    // Serial.print("New active state: ");
-    // Serial.println(matrixPulsarFSM.ActiveStateName());
+    // DPRINT("New active state: ");
+    // DPRINTLN(matrixPulsarFSM.ActiveStateName());
   }
 
   // draw/erase the pulsar pixel
@@ -149,7 +145,7 @@ void loop()
   bool win = true;
   for (byte tile = 0; tile < NUM_TANGRAMS; tile++)
   {
-    if (tangramPositions[tile] != portLocations[tile] >> 4)
+    if (tangramPositions[tile] != portToXYCoordinates[tile] >> 4)
     {
       win = false;
       break;
@@ -157,6 +153,6 @@ void loop()
   }
   if (win)
   {
-    Serial.println("WINNER!");
+    DPRINTLN("WINNER!");
   }
 }
