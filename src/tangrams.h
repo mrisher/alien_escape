@@ -49,7 +49,8 @@ static const PROGMEM uint8_t tangrams[NUM_TANGRAMS][TANGRAM_HEIGHT] {
 };
 
 // set correct Tile Locations (x = high 4 bits, y = low 4 bits)
-byte portLocations[NUM_TANGRAMS] = {
+// so tangram 1 belongs in port 2, 2->0, 3->3, 4->1
+byte portToXYCoordinates[NUM_TANGRAMS] = {
   (2 << 4) + 0, (0 << 4) + 0, (3 << 4) + 0, (6 << 4) + 0
 };
 
