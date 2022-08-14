@@ -31,7 +31,7 @@ MatrixPulsarFSM matrixPulsarFSM(&matrix);
 
 // Plugs (tangrams) & Columns (ports) Pins
 const byte NUM_JUMPERS = 4;
-const byte inputJumperPins[NUM_JUMPERS] = {30, 38, 34, 36};
+const byte inputJumperPins[NUM_JUMPERS] = {30, 32, 34, 36};
 const byte outputJumperPins[NUM_JUMPERS] = {31, 33, 35, 37};
 
 struct GameState
