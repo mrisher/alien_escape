@@ -44,7 +44,7 @@ static const PROGMEM uint8_t tangrams[NUM_TANGRAMS][TANGRAM_HEIGHT] {
     B11000000,
     B11000000,
     B11000000,
-    B11000000
+    B10000000
   }
 };
 
