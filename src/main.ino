@@ -48,13 +48,13 @@ void setup()
 
   DPRINTLN("Setting up quad alphanumeric display");
   //set up the alphanum quad display
-  alphanum.begin(0x71);  // pass in the address
+  /* alphanum.begin(0x71);  // pass in the address
   alphanum.clear();
   alphanum.writeDigitAscii(0, 'A');
   alphanum.writeDigitAscii(1, 'B');
   alphanum.writeDigitAscii(2, 'C');
-  alphanum.writeDigitAscii(3, 'D');
-  alphanum.writeDisplay();
+  alphanum.writeDigitAscii(3, 'D'); */
+  //alphanum.writeDisplay();   // this line crashes the display
   DPRINTLN("Finished setting up quad alphanum");
   
 
