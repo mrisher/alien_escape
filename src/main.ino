@@ -22,15 +22,6 @@ Requires Bounce2 library for pushbutton debouncing
 #include "matrixPulsarFsm.h"
 #include "alienNumber.h"
 
-#define DEBUG   //If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
-#ifdef DEBUG    //Macros are usually in all capital letters.
-   #define DPRINT(...)    Serial.print(__VA_ARGS__)     //DPRINT is a macro, debug print
-   #define DPRINTLN(...)  Serial.println(__VA_ARGS__)   //DPRINTLN is a macro, debug print with new line
-#else
-   #define DPRINT(...)     //now defines a blank line
-   #define DPRINTLN(...)   //now defines a blank line
-#endif
-
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 Adafruit_AlphaNum4 alphanum = Adafruit_AlphaNum4();
 
@@ -44,15 +35,6 @@ MatrixPulsarFSM matrixPulsarFSM(&matrix);
 const byte NUM_JUMPERS = 4;
 const byte inputJumperPins[NUM_JUMPERS] = {30, 32, 34, 36};
 const byte outputJumperPins[NUM_JUMPERS] = {31, 33, 35, 37};
-<<<<<<< HEAD
-
-struct GameState
-{
-  bool jumpersCorrect = false;
-  byte height = 0;
-};
-=======
->>>>>>> adding_alphanum
 
 void setup()
 {
@@ -63,8 +45,6 @@ void setup()
   matrix.begin(0x70); // pass in the address
   matrix.clear();
   DPRINTLN("Cleared matrix");
-<<<<<<< HEAD
-=======
 
   DPRINTLN("Setting up quad alphanumeric display");
   //set up the alphanum quad display
@@ -77,9 +57,6 @@ void setup()
   //alphanum.writeDisplay();   // this line crashes the display
   DPRINTLN("Finished setting up quad alphanum");
   
-
->>>>>>> adding_alphanum
-
   // zip through matrix as one-time boot animation
   DPRINTLN("Starting 8x8 animation");
   for (int i = 0; i < 8; i++)
@@ -97,11 +74,7 @@ void setup()
   DPRINTLN("Finished 8x8 animation");
 
   // set up plugs and holes
-<<<<<<< HEAD
-  DPRINTLN("Setting up pins and plugs");
-=======
   DPRINTLN("Setting up tangram plugs and ports");
->>>>>>> adding_alphanum
   for (byte i = 0; i < NUM_JUMPERS; i++)
   {
     pinMode(outputJumperPins[i], OUTPUT);
@@ -109,11 +82,7 @@ void setup()
     pinMode(inputJumperPins[i], INPUT_PULLUP);
   }
 
-<<<<<<< HEAD
-  DPRINTLN("setup() done");
-=======
   DPRINTLN("Done with setup()");
->>>>>>> adding_alphanum
 }
 
 
@@ -168,13 +137,8 @@ void loop()
   // Update pulsar State Machine
   if (matrixPulsarFSM.Update())
   {
-<<<<<<< HEAD
     DPRINT("New active state: ");
     DPRINTLN(matrixPulsarFSM.ActiveStateName());
-=======
-    // DPRINT("New active state: ");
-    // DPRINTLN(matrixPulsarFSM.ActiveStateName());
->>>>>>> adding_alphanum
   }
 
   // draw/erase the pulsar pixel
