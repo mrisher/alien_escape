@@ -130,8 +130,8 @@ void loop()
   // Update pulsar State Machine
   if (matrixPulsarFSM.Update())
   {
-    // DPRINT("New active state: ");
-    // DPRINTLN(matrixPulsarFSM.ActiveStateName());
+    DPRINT("New active state: ");
+    DPRINTLN(matrixPulsarFSM.ActiveStateName());
   }
 
   // draw/erase the pulsar pixel
